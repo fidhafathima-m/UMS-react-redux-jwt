@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import userService from "../services/userService";
+import { updateUser } from "./authSlice"; // Import the action from authSlice
 
 export const fetchUsers = createAsyncThunk(
     'users/fetchUsers',
@@ -15,12 +16,16 @@ export const fetchUsers = createAsyncThunk(
 
 export const updateUserProfile = createAsyncThunk(
     'users/updateProfile',
-    async(formData, {rejectWithValue}) => {
+    async(formData, {rejectWithValue, dispatch}) => {
         try {
             const response = await userService.updateProfile(formData)
+            
+            // Also update the user data in auth slice
+            dispatch(updateUser(response));
+            
             return response
         } catch (error) {
-            return rejectWithValue(error.response.data.message)
+            return rejectWithValue(error.response?.data?.message || 'Update failed')
         }
     }
 )
@@ -37,19 +42,38 @@ const userSlice = createSlice({
         setCurrentUser: (state, action) => {
             state.currentUser = action.payload
         },
+        clearError: (state) => {
+            state.error = null;
+        }
     },
     extraReducers: (builder) => {
         builder
+         .addCase(fetchUsers.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        })
         .addCase(fetchUsers.fulfilled, (state, action) => {
-            state.users = action.payload,
-            state.isLoading = false
+            state.users = action.payload;
+            state.isLoading = false;
+        })
+        .addCase(fetchUsers.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+        })
+        .addCase(updateUserProfile.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
         })
         .addCase(updateUserProfile.fulfilled, (state, action) => {
-            state.currentUser = action.payload,
-            state.isLoading = false
+            state.currentUser = action.payload;
+            state.isLoading = false;
         })
+        .addCase(updateUserProfile.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+        });
     }
 })
 
-export const {setCurrentUser} = userSlice.actions
+export const {setCurrentUser, clearError} = userSlice.actions
 export default userSlice.reducer

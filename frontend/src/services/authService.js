@@ -10,8 +10,13 @@ const authService = {
         return response.data
     },
     getCurrentUser: async() => {
-        const response = await api.get('/auth/me');
-        return response.data
+        try {
+            const response = await api.get('/auth/me');
+            return response.data.user;
+        } catch (error) {
+            localStorage.removeItem('token');
+            throw error;
+        }
     }
 }
 export default authService;

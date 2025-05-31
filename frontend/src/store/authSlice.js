@@ -1,5 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit'
 import authService from '../services/authService'
+import api from '../services/api';
 
 export const loginUser = createAsyncThunk(
     'auth/login',
@@ -7,6 +8,7 @@ export const loginUser = createAsyncThunk(
         try {
             const response = await authService.login(credentials)
             localStorage.setItem('token', response.token);
+            console.log('Token being sent:', localStorage.getItem('token'))
             return response;
         } catch (error) {
             return rejectWithValue(error.response.data.message);
@@ -27,6 +29,22 @@ export const registerUser = createAsyncThunk(
     }
 )
 
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+     
+      const response = await api.get('/auth/me');
+      return response.data.user;
+    } catch (error) {
+      localStorage.removeItem('token'); // Clear invalid token
+      return rejectWithValue(error.response?.data?.message || 'Invalid token');
+    }
+  }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
@@ -45,7 +63,14 @@ const authSlice = createSlice({
         },
         clearError: (state) => {
             state.error = null
-        }
+        },
+        // Add this reducer to update user data
+        updateUser: (state, action) => {
+            state.user = { ...state.user, ...action.payload };
+        },
+        setUser: (state, action) => {
+    state.user = action.payload;
+  },
     },
     extraReducers: (builder) => {
         builder
@@ -77,7 +102,23 @@ const authSlice = createSlice({
             state.isLoading = false
             state.error = action.payload
         })
+        .addCase(fetchUserProfile.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        })
+        .addCase(fetchUserProfile.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.user = action.payload;
+            state.isAuthenticated = true;
+        })
+        .addCase(fetchUserProfile.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+            state.isAuthenticated = false;
+            localStorage.removeItem('token');
+        });
     }
 })
-export const {logout, clearError} = authSlice.actions
+
+export const {logout, clearError, updateUser} = authSlice.actions
 export default authSlice.reducer
