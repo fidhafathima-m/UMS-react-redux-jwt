@@ -18,13 +18,8 @@ const UserProfile = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const fileInputRef = useRef(null);
 
-    const backendUrl = 'http://localhost:5000';
+    const backendUrl = `${import.meta.env.VITE_API_URL}`;
 
-    useEffect(() => {
-        console.log('UserProfile component mounted');
-    }, []);
-
-    // Initialize state when component mounts or user data changes
     useEffect(() => {
         if (user) {
             setName(user.name || '');
@@ -33,7 +28,6 @@ const UserProfile = () => {
         }
     }, [user]);
 
-    // Clear success message after 3 seconds
     useEffect(() => {
         if (successMessage) {
             const timer = setTimeout(() => {
@@ -58,7 +52,6 @@ const UserProfile = () => {
     const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Clear previous messages
     setSuccessMessage('');
     
     const formData = new FormData();
@@ -70,11 +63,8 @@ const UserProfile = () => {
     }
 
     try {
-        console.log('Submitting profile update...');
         const result = await dispatch(updateUserProfile(formData)).unwrap();
-        console.log('Profile update successful:', result);
         
-        // Update local state with the returned user data
         if (result.user) {
             setName(result.user.name);
             setEmail(result.user.email);
@@ -98,7 +88,6 @@ const UserProfile = () => {
         
     } catch (error) {
         console.error('Update failed:', error);
-        // Error handling is already done by Redux
     }
 };
 
@@ -139,14 +128,12 @@ const handleLogout = () => {
                             Profile Information
                         </h3>
 
-                        {/* Success Message */}
                         {successMessage && (
                             <div className="success-message">
                                 {successMessage}
                             </div>
                         )}
 
-                        {/* Error Message */}
                         {error && (
                             <div className="error-message">
                                 {error}
@@ -154,7 +141,6 @@ const handleLogout = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="profile-form">
-                            {/* Profile Image Section */}
                             <div className="image-section">
                                 <div>
                                     <img
@@ -184,7 +170,6 @@ const handleLogout = () => {
                                 </div>
                             </div>
 
-                            {/* Form Fields */}
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label className="form-label">

@@ -2,16 +2,15 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { logout } from '../../store/authSlice'
 import { useNavigate } from 'react-router-dom'
-import './HomePage.css' // Import the CSS file
+import './HomePage.css'
 
 const HomePage = () => {
     const {user} = useSelector((state) => state.auth)
     const dispatch = useDispatch()
     const navigate = useNavigate();
-    const backendUrl = 'http://localhost:5000';
+    const backendUrl = `${import.meta.env.VITE_API_URL}`;
 
     const handleProfileClick = () => {
-        console.log('Navigating to profile');
         navigate('/profile');
     };
 

@@ -96,13 +96,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        // Small delay to prevent flash of content
         const timer = setTimeout(() => setIsChecking(false), 100);
         return () => clearTimeout(timer);
     }, []);
 
     if (isChecking) {
-        return null; // or loading spinner
+        return null; 
     }
 
     if (!isAuthenticated) {

@@ -1,12 +1,9 @@
-/* AdminDashboard.css */
 
-/* Main container styles */
 .admin-container {
   min-height: 100vh;
   background-color: #f9fafb;
 }
 
-/* Navigation styles */
 .admin-nav {
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -40,14 +37,12 @@
   background-color: #b91c1c;
 }
 
-/* Main content styles */
 .main-content {
   max-width: 80rem;
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
 
-/* Search and create section */
 .search-create-container {
   margin-bottom: 1.5rem;
   display: flex;
@@ -84,7 +79,6 @@
   background-color: #4338ca;
 }
 
-/* Users list styles */
 .users-list {
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -175,7 +169,6 @@
   color: #b91c1c;
 }
 
-/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -276,7 +269,6 @@
   background-color: #4338ca;
 }
 
-/* Loading state */
 .loading-container {
   min-height: 100vh;
   display: flex;
@@ -288,8 +280,6 @@
   font-size: 1.25rem;
 }
 
-/* View Mode Toggle */
-/* View Mode Toggle Container */
 .view-mode-toggle-container {
   display: flex;
   justify-content: center;
@@ -324,7 +314,6 @@
   font-weight: 600;
 }
 
-/* Optional: Add animated underline effect */
 .toggle-btn::after {
   content: '';
   position: absolute;
@@ -340,11 +329,9 @@
   width: 100%;
 }
 
-/* Remove default button styling */
 .toggle-btn:focus {
   outline: none;
 }
-/* Current User Info */
 .nav-right {
     display: flex;
     align-items: center;
@@ -364,7 +351,6 @@
     object-fit: cover;
 }
 
-/* You Badge */
 .you-badge {
     color: #4CAF50;
     font-size: 0.8em;
@@ -372,7 +358,6 @@
     margin-left: 5px;
 }
 
-/* Disabled Delete Button */
 .action-btn[disabled] {
     opacity: 0.5;
     cursor: not-allowed;

@@ -243,7 +243,7 @@ app.post('/api/users', auth, adminAuth, async(req, res) => {
         const {name, email, role} = req.body
         let user = await User.findOne({email})
         if(user) {
-            return res.status(400).json({message: 'User already exists'})
+            return res.status(400).json({message: 'User already exists with that email'})
         }
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash('password123', salt)

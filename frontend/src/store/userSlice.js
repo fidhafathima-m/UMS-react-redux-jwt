@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import userService from "../services/userService";
-import { updateUser } from "./authSlice"; // Import the action from authSlice
+import { updateUser } from "./authSlice"; 
 
 export const fetchUsers = createAsyncThunk(
     'users/fetchUsers',
@@ -20,7 +20,6 @@ export const updateUserProfile = createAsyncThunk(
         try {
             const response = await userService.updateProfile(formData)
             
-            // Also update the user data in auth slice
             dispatch(updateUser(response));
             
             return response

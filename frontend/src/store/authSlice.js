@@ -8,7 +8,6 @@ export const loginUser = createAsyncThunk(
         try {
             const response = await authService.login(credentials)
             localStorage.setItem('token', response.token);
-            console.log('Token being sent:', localStorage.getItem('token'))
             return response;
         } catch (error) {
             return rejectWithValue(error.response.data.message);
@@ -39,7 +38,7 @@ export const fetchUserProfile = createAsyncThunk(
       const response = await api.get('/auth/me');
       return response.data.user;
     } catch (error) {
-      localStorage.removeItem('token'); // Clear invalid token
+      localStorage.removeItem('token'); 
       return rejectWithValue(error.response?.data?.message || 'Invalid token');
     }
   }
@@ -64,7 +63,6 @@ const authSlice = createSlice({
         clearError: (state) => {
             state.error = null
         },
-        // Add this reducer to update user data
         updateUser: (state, action) => {
             state.user = { ...state.user, ...action.payload };
         },

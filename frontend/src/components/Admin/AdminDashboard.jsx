@@ -19,7 +19,7 @@ const AdminDashboard = () => {
         name: '', email: '', role: 'user'
     })
     const [viewMode, setViewMode] = useState('users') 
-    const backendUrl = 'http://localhost:5000';
+    const backendUrl = `${import.meta.env.VITE_API_URL}`;
 
     useEffect(() => {
         dispatch(fetchUsers())
@@ -78,7 +78,11 @@ const AdminDashboard = () => {
             setNewUser({name: '', email: '', role: 'user'})
             dispatch(fetchUsers())
         } catch (error) {
-            alert(`Error craeting user: ${error.message}`)
+            if (error.response && error.response.status === 400) {
+            alert(error.response.data.message || 'User creation failed')
+        } else {
+            alert(`Error creating user: ${error.message}`)
+        }
         }
     }
 
