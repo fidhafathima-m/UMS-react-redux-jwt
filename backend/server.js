@@ -67,8 +67,12 @@ app.post('/api/auth/register', async(req, res) => {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
+        
+
+        const defaultProfile = '/uploads/profile_default.jpg'
+
         user = new User({
-            name, email, password: hashedPassword, role: 'user'
+            name, email, password: hashedPassword, role: 'user', profileImage: defaultProfile
         })
         await user.save()
 
@@ -77,8 +81,6 @@ app.post('/api/auth/register', async(req, res) => {
             id: user.id, role: user.role
         }
         const token = jwt.sign(payLoad, process.env.JWT_SECRET, {expiresIn: '24h'})
-
-        const defaultProfile = '/uploads/profile_default.jpg'
         res.json({
             token,
             user: {
@@ -86,7 +88,7 @@ app.post('/api/auth/register', async(req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                profileImage: user.profileImage ?  user.profileImage : defaultProfile
+                profileImage: user.profileImage
             }
         })
 

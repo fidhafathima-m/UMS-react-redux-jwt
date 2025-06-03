@@ -9,6 +9,7 @@ const HomePage = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate();
     const backendUrl = `${import.meta.env.VITE_API_URL}`;
+    const defaultProfileImage = '/uploads/profile_default.jpg';
 
     const handleProfileClick = () => {
         navigate('/profile');
@@ -18,6 +19,20 @@ const HomePage = () => {
         if(window.confirm('Are you sure to logout?')) {
             dispatch(logout())
         }
+    }
+
+     const getProfileImageUrl = () => {
+        if (!user?.profileImage) {
+            return `${backendUrl}${defaultProfileImage}`;
+        }
+        
+        if (user.profileImage.startsWith('http') || user.profileImage.startsWith('/uploads')) {
+            return user.profileImage.includes(backendUrl) ? 
+                   user.profileImage : 
+                   `${backendUrl}${user.profileImage}`;
+        }
+        
+        return `${backendUrl}${user.profileImage}`;
     }
     return (
         <div className="home-container">
@@ -30,8 +45,11 @@ const HomePage = () => {
                         <div className="current-user-info">
                             <img
                                 className="current-user-avatar"
-                                src={user.profileImage ? `${backendUrl}${user.profileImage}` : 'https://via.placeholder.com/40'}
-                                alt={user.name}
+                                src={getProfileImageUrl()}
+                                alt={user?.name || 'User'}
+                                onError={(e) => {
+                                    e.target.src = `${backendUrl}${defaultProfileImage}`;
+                                }}
                             />
                             <span>{user.name}</span>
                         </div>

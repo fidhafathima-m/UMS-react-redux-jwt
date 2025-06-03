@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { updateUserProfile } from "../../store/userSlice"
-import { logout } from "../../store/authSlice"
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUserProfile } from "../../store/userSlice";
+import { logout } from "../../store/authSlice";
+import { useNavigate } from "react-router-dom";
 import "./UserProfile.css";
 
 const UserProfile = () => {
@@ -16,15 +16,23 @@ const UserProfile = () => {
     const [profileImage, setProfileImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
     const fileInputRef = useRef(null);
 
     const backendUrl = `${import.meta.env.VITE_API_URL}`;
+    const defaultProfileImage = '/uploads/profile_default.jpg';
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
     useEffect(() => {
         if (user) {
             setName(user.name || '');
             setEmail(user.email || '');
-            setPreviewUrl(user.profileImage ? `${backendUrl}${user.profileImage}` : '');
+            const imageUrl = user.profileImage ? 
+                `${backendUrl}${user.profileImage}` : 
+                `${backendUrl}${defaultProfileImage}`;
+            setPreviewUrl(imageUrl);
         }
     }, [user]);
 
@@ -37,65 +45,126 @@ const UserProfile = () => {
         }
     }, [successMessage]);
 
+    const validate = () => {
+        const newErrors = {};
+        
+        // Name validation
+        if (!name.trim()) {
+            newErrors.name = 'Name is required';
+        } else if (name.length < 2) {
+            newErrors.name = 'Name must be at least 2 characters';
+        } else if (name.length > 50) {
+            newErrors.name = 'Name cannot exceed 50 characters';
+        }
+        
+        // Email validation
+        if (!email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = 'Please enter a valid email address';
+        }
+        
+        // Image validation
+        if (profileImage) {
+            if (profileImage.size > MAX_FILE_SIZE) {
+                newErrors.profileImage = 'Image must be less than 2MB';
+            } else if (!ALLOWED_FILE_TYPES.includes(profileImage.type)) {
+                newErrors.profileImage = 'Only JPG, PNG, or GIF images are allowed';
+            }
+        }
+        
+        return newErrors;
+    };
+
+    const handleBlur = (field) => {
+        setTouched({ ...touched, [field]: true });
+        setErrors(validate());
+    };
+
     const handleImageSelect = (e) => {
         const file = e.target.files[0];
-        if (file && file !== profileImage) {
-            setProfileImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewUrl(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (file) {
+            const validationErrors = validate();
+            
+            if (file.size > MAX_FILE_SIZE) {
+                validationErrors.profileImage = 'Image must be less than 2MB';
+            } else if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                validationErrors.profileImage = 'Only JPG, PNG, or GIF images are allowed';
+            }
+            
+            setErrors(validationErrors);
+            
+            if (!validationErrors.profileImage) {
+                setProfileImage(file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPreviewUrl(reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Reset file input if invalid
+                e.target.value = '';
+            }
         }
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    setSuccessMessage('');
-    
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('email', email);
-    
-    if (profileImage) {
-        formData.append('profileImage', profileImage);
-    }
-
-    try {
-        const result = await dispatch(updateUserProfile(formData)).unwrap();
+        e.preventDefault();
         
-        if (result.user) {
-            setName(result.user.name);
-            setEmail(result.user.email);
-            if (result.user.profileImage) {
-                setPreviewUrl(`${backendUrl}${result.user.profileImage}`);
-            }
-        }
-
-        dispatch({
-            type: 'auth/setUser',
-            payload: result.user,
+        const validationErrors = validate();
+        setErrors(validationErrors);
+        setTouched({
+            name: true,
+            email: true,
+            profileImage: true
         });
         
-        setSuccessMessage('Profile updated successfully!');
-        setProfileImage(null);
-        
-        setTimeout(() => {
-            setSuccessMessage('Redirecting to home..!');
-            navigate('/home');
-        }, 1000);
-        
-    } catch (error) {
-        console.error('Update failed:', error);
-    }
-};
+        if (Object.keys(validationErrors).length === 0) {
+            setSuccessMessage('');
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            
+            if (profileImage) {
+                formData.append('profileImage', profileImage);
+            }
 
-const handleLogout = () => {
-    if(window.confirm('Are you sure you want to logout?')) {
-        dispatch(logout())
-    }
-}
+            try {
+                const result = await dispatch(updateUserProfile(formData)).unwrap();
+                
+                if (result.user) {
+                    setName(result.user.name);
+                    setEmail(result.user.email);
+                    if (result.user.profileImage) {
+                        setPreviewUrl(`${backendUrl}${result.user.profileImage}`);
+                    }
+                }
+
+                dispatch({
+                    type: 'auth/setUser',
+                    payload: result.user,
+                });
+                
+                setSuccessMessage('Profile updated successfully!');
+                setProfileImage(null);
+                
+                setTimeout(() => {
+                    setSuccessMessage('Redirecting to home..!');
+                    navigate('/home');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Update failed:', error);
+            }
+        }
+    };
+
+    const handleLogout = () => {
+        if(window.confirm('Are you sure you want to logout?')) {
+            dispatch(logout());
+        }
+    };
 
     return (
         <div className="profile-container">
@@ -140,13 +209,16 @@ const handleLogout = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="profile-form">
+                        <form onSubmit={handleSubmit} className="profile-form" noValidate>
                             <div className="image-section">
                                 <div>
                                     <img
                                         className="profile-image"
-                                        src={previewUrl ? previewUrl : `${backendUrl}${user.profileImage}`}
+                                        src={previewUrl || `${backendUrl}${defaultProfileImage}`}
                                         alt="Profile"
+                                        onError={(e) => {
+                                            e.target.src = `${backendUrl}${defaultProfileImage}`;
+                                        }}
                                     />
                                 </div>
                                 <div>
@@ -167,6 +239,9 @@ const handleLogout = () => {
                                     <p className="image-hint">
                                         JPG, GIF or PNG. 2MB max.
                                     </p>
+                                    {errors.profileImage && (
+                                        <p className="file-error">{errors.profileImage}</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -180,8 +255,12 @@ const handleLogout = () => {
                                         required
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        className="form-input"
+                                        onBlur={() => handleBlur('name')}
+                                        className={`form-input ${touched.name && errors.name ? 'input-error' : ''}`}
                                     />
+                                    {touched.name && errors.name && (
+                                        <span className="field-error">{errors.name}</span>
+                                    )}
                                 </div>
 
                                 <div className="form-group">
@@ -193,8 +272,12 @@ const handleLogout = () => {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="form-input"
+                                        onBlur={() => handleBlur('email')}
+                                        className={`form-input ${touched.email && errors.email ? 'input-error' : ''}`}
                                     />
+                                    {touched.email && errors.email && (
+                                        <span className="field-error">{errors.email}</span>
+                                    )}
                                 </div>
                             </div>
 
@@ -212,7 +295,7 @@ const handleLogout = () => {
                 </div>
             </main>
         </div>
-    )
-}
+    );
+};
 
-export default UserProfile
+export default UserProfile;

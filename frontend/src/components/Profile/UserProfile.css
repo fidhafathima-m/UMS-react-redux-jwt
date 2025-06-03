@@ -188,3 +188,37 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Add to your UserProfile.css */
+.input-error {
+    border-color: #ff4444;
+}
+
+.field-error {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.file-error {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.success-message {
+    color: #4CAF50;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #e8f5e9;
+    border-radius: 4px;
+}
+
+.error-message {
+    color: #ff4444;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #ffebee;
+    border-radius: 4px;
+}

@@ -92,3 +92,18 @@
 .toggle-button:hover {
   color: #4338ca;
 }
+
+.input-field.error {
+  border-color: #ff4444;
+}
+
+.field-error {
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}

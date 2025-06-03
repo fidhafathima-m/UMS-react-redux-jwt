@@ -1,29 +1,31 @@
-import React from 'react'
-import { useEffect } from 'react'
-import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchUsers } from '../../store/userSlice'
-import userService from '../../services/userService'
-import { logout } from '../../store/authSlice'
-import './AdminDashboard.css'
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers } from '../../store/userSlice';
+import userService from '../../services/userService';
+import { logout } from '../../store/authSlice';
+import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const dispatch = useDispatch()
-    const {users, isLoading} = useSelector(state => state.users)
-    const { user: currentUser } = useSelector(state => state.auth) 
-    const [searchQuery, setSearchQuery] = useState('')
-    const [filteredUsers, setFilteredUsers] = useState([])
-    const [editingUser, setEditingUser] = useState(null)
-    const [showCreateForm, setShowCreateForm] = useState(false)
+    const dispatch = useDispatch();
+    const { users, isLoading } = useSelector(state => state.users);
+    const { user: currentUser } = useSelector(state => state.auth);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredUsers, setFilteredUsers] = useState([]);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editingErrors, setEditingErrors] = useState({});
+    const [showCreateForm, setShowCreateForm] = useState(false);
     const [newUser, setNewUser] = useState({
-        name: '', email: '', role: 'user'
-    })
-    const [viewMode, setViewMode] = useState('users') 
+        name: '', 
+        email: '', 
+        role: 'user',
+    });
+    const [createErrors, setCreateErrors] = useState({});
+    const [viewMode, setViewMode] = useState('users');
     const backendUrl = `${import.meta.env.VITE_API_URL}`;
 
     useEffect(() => {
-        dispatch(fetchUsers())
-    }, [dispatch])
+        dispatch(fetchUsers());
+    }, [dispatch]);
 
     useEffect(() => {
         if (users) {
@@ -39,65 +41,122 @@ const AdminDashboard = () => {
                 filtered = filtered.filter(user => 
                     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     user.email.toLowerCase().includes(searchQuery.toLowerCase()) 
-                )
+                );
             }
             
-            setFilteredUsers(filtered)
+            setFilteredUsers(filtered);
         }
-    }, [searchQuery, users, viewMode])
+    }, [searchQuery, users, viewMode]);
 
-    const handleDeletUser = async(userId) => {
-        if(window.confirm('Are you sure you want to delete this user?')) {
+    const validateEditForm = () => {
+        const errors = {};
+        
+        if (!editingUser.name.trim()) {
+            errors.name = 'Name is required';
+        } else if (editingUser.name.length < 2) {
+            errors.name = 'Name must be at least 2 characters';
+        }
+        
+        if (!editingUser.email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editingUser.email)) {
+            errors.email = 'Please enter a valid email';
+        }
+        
+        return errors;
+    };
+
+    const validateCreateForm = () => {
+        const errors = {};
+        
+        if (!newUser.name.trim()) {
+            errors.name = 'Name is required';
+        } else if (newUser.name.length < 2) {
+            errors.name = 'Name must be at least 2 characters';
+        }
+        
+        if (!newUser.email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)) {
+            errors.email = 'Please enter a valid email';
+        }
+        return errors;
+    };
+
+    const handleDeleteUser = async (userId) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
             try {
-                await userService.deleteUser(userId)
-                dispatch(fetchUsers()) 
+                await userService.deleteUser(userId);
+                dispatch(fetchUsers());
             } catch (error) {
-                alert(`Error deleting user: ${error.message}`)
+                alert(`Error deleting user: ${error.message}`);
             }
         }
-    }
+    };
 
-    const handleEditUser = async(user) => {
-        setEditingUser({...user})
-    }
+    const handleEditUser = (user) => {
+        setEditingUser({ ...user });
+        setEditingErrors({});
+    };
 
     const handleUpdateUser = async () => {
-        try {
-            await userService.updateUser(editingUser._id, editingUser)
-            setEditingUser(null)
-            dispatch(fetchUsers())
-        } catch (error) {
-            alert(`Error updating user: ${error.message}`)
+        const errors = validateEditForm();
+        setEditingErrors(errors);
+        
+        if (Object.keys(errors).length === 0) {
+            try {
+                await userService.updateUser(editingUser._id, editingUser);
+                setEditingUser(null);
+                dispatch(fetchUsers());
+            } catch (error) {
+                alert(`Error updating user: ${error.message}`);
+            }
         }
-    }
+    };
 
-    const handleCreateUser = async() => {
-        try {
-            await userService.createUser(newUser)
-            setShowCreateForm(false)
-            setNewUser({name: '', email: '', role: 'user'})
-            dispatch(fetchUsers())
-        } catch (error) {
-            if (error.response && error.response.status === 400) {
-            alert(error.response.data.message || 'User creation failed')
-        } else {
-            alert(`Error creating user: ${error.message}`)
+    const handleCreateUser = async () => {
+        const errors = validateCreateForm();
+        setCreateErrors(errors);
+        
+        if (Object.keys(errors).length === 0) {
+            try {
+                const userToCreate = {
+                    name: newUser.name,
+                    email: newUser.email,
+                    role: newUser.role,
+                    password: newUser.password
+                };
+                
+                await userService.createUser(userToCreate);
+                setShowCreateForm(false);
+                setNewUser({
+                    name: '', 
+                    email: '', 
+                    role: 'user',
+                });
+                dispatch(fetchUsers());
+            } catch (error) {
+                if (error.response && error.response.status === 400) {
+                    alert(error.response.data.message || 'User creation failed');
+                } else {
+                    alert(`Error creating user: ${error.message}`);
+                }
+            }
         }
-        }
-    }
+    };
 
     const handleLogout = () => {
-        if(window.confirm("Are you sure to logout?")) {
-            dispatch(logout())
+        if (window.confirm("Are you sure to logout?")) {
+            dispatch(logout());
         }
-    }
+    };
 
-    if(isLoading) {
+    if (isLoading) {
         return (
             <div className="loading-container">
                 <div className="loading-text">Loading...</div>
             </div>
-        )
+        );
     }
 
     return (
@@ -128,7 +187,6 @@ const AdminDashboard = () => {
 
             <main className="main-content">
                 <div className="search-create-container">
-                    
                     <div>
                         <input
                             type="text"
@@ -146,22 +204,22 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
-                    <div className="view-mode-toggle-container">
-                        <div className="view-mode-toggle">
-                            <button
-                                className={`toggle-btn ${viewMode === 'users' ? 'active' : ''}`}
-                                onClick={() => setViewMode('users')}
-                            >
-                                Users
-                            </button>
-                            <button
-                                className={`toggle-btn ${viewMode === 'admins' ? 'active' : ''}`}
-                                onClick={() => setViewMode('admins')}
-                            >
-                                Admins
-                            </button>
-                        </div>
+                <div className="view-mode-toggle-container">
+                    <div className="view-mode-toggle">
+                        <button
+                            className={`toggle-btn ${viewMode === 'users' ? 'active' : ''}`}
+                            onClick={() => setViewMode('users')}
+                        >
+                            Users
+                        </button>
+                        <button
+                            className={`toggle-btn ${viewMode === 'admins' ? 'active' : ''}`}
+                            onClick={() => setViewMode('admins')}
+                        >
+                            Admins
+                        </button>
                     </div>
+                </div>
 
                 <div className="users-list">
                     <ol>
@@ -170,9 +228,9 @@ const AdminDashboard = () => {
                                 <div className="user-content">
                                     <div className="user-info">
                                         <img
-                                          className="user-avatar"
-                                          src={user.profileImage ? `${backendUrl}${user.profileImage}` : 'https://via.placeholder.com/40'}
-                                          alt={user.name}
+                                            className="user-avatar"
+                                            src={user.profileImage ? `${backendUrl}${user.profileImage}` : 'https://via.placeholder.com/40'}
+                                            alt={user.name}
                                         />
                                         <div className="user-details">
                                             <div className="user-name">
@@ -185,7 +243,6 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="user-actions">
-                                        
                                         <button
                                             onClick={() => handleEditUser(user)}
                                             className="action-btn edit-btn"
@@ -194,7 +251,7 @@ const AdminDashboard = () => {
                                         </button>
                                         {user.email !== currentUser.email && (
                                             <button
-                                                onClick={() => handleDeletUser(user._id)}
+                                                onClick={() => handleDeleteUser(user._id)}
                                                 className="action-btn delete-btn"
                                             >
                                                 Delete
@@ -219,8 +276,9 @@ const AdminDashboard = () => {
                                         type="text"
                                         value={editingUser.name}
                                         onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
-                                        className="form-input"
+                                        className={`form-input ${editingErrors.name ? 'input-error' : ''}`}
                                     />
+                                    {editingErrors.name && <span className="error-message">{editingErrors.name}</span>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Email</label>
@@ -228,8 +286,9 @@ const AdminDashboard = () => {
                                         type="email"
                                         value={editingUser.email}
                                         onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                                        className="form-input"
+                                        className={`form-input ${editingErrors.email ? 'input-error' : ''}`}
                                     />
+                                    {editingErrors.email && <span className="error-message">{editingErrors.email}</span>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Role</label>
@@ -273,8 +332,9 @@ const AdminDashboard = () => {
                                         type="text"
                                         value={newUser.name}
                                         onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                                        className="form-input"
+                                        className={`form-input ${createErrors.name ? 'input-error' : ''}`}
                                     />
+                                    {createErrors.name && <span className="error-message">{createErrors.name}</span>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Email</label>
@@ -282,8 +342,9 @@ const AdminDashboard = () => {
                                         type="email"
                                         value={newUser.email}
                                         onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                                        className="form-input"
+                                        className={`form-input ${createErrors.email ? 'input-error' : ''}`}
                                     />
+                                    {createErrors.email && <span className="error-message">{createErrors.email}</span>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Role</label>
@@ -316,7 +377,7 @@ const AdminDashboard = () => {
                 )}
             </main>
         </div>
-    )
-}
+    );
+};
 
-export default AdminDashboard
+export default AdminDashboard;
