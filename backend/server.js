@@ -80,7 +80,7 @@ app.post('/api/auth/register', async(req, res) => {
         const payLoad = {
             id: user.id, role: user.role
         }
-        const token = jwt.sign(payLoad, process.env.JWT_SECRET, {expiresIn: '24h'})
+        const token = jwt.sign(payLoad, process.env.JWT_SECRET, {expiresIn: '1h'})
         res.json({
             token,
             user: {
@@ -112,7 +112,7 @@ app.post('/api/auth/login', async(req, res) => {
         const payLoad = {
             id: user.id, role: user.role
         }
-        const token = jwt.sign(payLoad, process.env.JWT_SECRET, {expiresIn: '24h'})
+        const token = jwt.sign(payLoad, process.env.JWT_SECRET, {expiresIn: '1h'})
 
         res.json({
             token,
